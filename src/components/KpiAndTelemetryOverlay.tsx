@@ -220,9 +220,13 @@ export const KpiAndTelemetryOverlay: React.FC<KpiAndTelemetryOverlayProps> = ({
               </h3>
               <p className="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5">
                 <Building2 className="w-3 h-3 text-slate-400" />
-                Distrito: <strong className="text-slate-200">{activeSector.distrito}</strong> · População:{' '}
-                <strong className="text-slate-200">{activeSector.populacao} hab</strong> ({activeSector.domicilios} dom.)
+                Distrito: <strong className="text-slate-200">{activeSector.distrito}</strong> · Altitude:{' '}
+                <strong className="text-indigo-300">{activeSector.elevacao_m}m</strong> · Pop:{' '}
+                <strong className="text-slate-200">{activeSector.populacao} hab</strong>
               </p>
+              <div className="mt-1 text-[10px] font-mono text-fuchsia-300 bg-fuchsia-950/40 border border-fuchsia-500/30 px-2 py-0.5 rounded inline-block">
+                Perfil: {activeSector.perfil_social}
+              </div>
               {activeSector.comunidade_fcu && (
                 <div className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-500/20 border border-rose-500/40 text-[10px] font-mono text-rose-300">
                   <AlertTriangle className="w-3 h-3" />
@@ -241,15 +245,15 @@ export const KpiAndTelemetryOverlay: React.FC<KpiAndTelemetryOverlayProps> = ({
 
           {/* Dados simultâneos das 3 Camadas conectadas pelo cilindro vertical */}
           <div className="space-y-2.5 text-xs">
-            {/* Camada 0: Vulnerabilidade Socioambiental */}
+            {/* Camada 0: Quem Mora Onde em Campinas (Demografia & Tecido Urbano) */}
             <div className="p-2.5 rounded-xl bg-fuchsia-950/25 border border-fuchsia-500/30">
               <div className="flex items-center justify-between text-[10px] font-mono uppercase text-fuchsia-300 mb-1">
                 <span className="flex items-center gap-1">
-                  <Users className="w-3.5 h-3.5" /> Camada 0 · Vulnerabilidade Socioambiental
+                  <Users className="w-3.5 h-3.5" /> Camada 0 · Quem Mora Onde (Censo 2022)
                 </span>
-                <span>IVSG: {activeSector.sim_vulnerabilidade_ivsg.toFixed(2)}</span>
+                <span>IVSG: {activeSector.sim_vulnerabilidade_ivsg.toFixed(2)} · Apt: {activeSector.pct_verticalizacao}%</span>
               </div>
-              <div className="grid grid-cols-3 gap-2 mt-1">
+              <div className="grid grid-cols-4 gap-1.5 mt-1">
                 <div>
                   <span className="text-[10px] text-slate-400 block">Renda Média</span>
                   <span className="font-mono font-semibold text-slate-100">
@@ -257,15 +261,21 @@ export const KpiAndTelemetryOverlay: React.FC<KpiAndTelemetryOverlayProps> = ({
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 block">Chefia Feminina</span>
+                  <span className="text-[10px] text-slate-400 block">Chefia Fem.</span>
                   <span className="font-mono font-semibold text-fuchsia-300">
                     {activeSector.pct_chefia_feminina}%
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 block">Pop. Preta/Parda</span>
-                  <span className="font-mono font-semibold text-slate-200">
+                  <span className="text-[10px] text-slate-400 block">Preta/Parda</span>
+                  <span className="font-mono font-semibold text-amber-200">
                     {activeSector.pct_negra_indigena}%
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 block">0–14 / 60+</span>
+                  <span className="font-mono font-semibold text-sky-200">
+                    {activeSector.pct_jovens_0a14}% / {activeSector.pct_idosos_60mais}%
                   </span>
                 </div>
               </div>

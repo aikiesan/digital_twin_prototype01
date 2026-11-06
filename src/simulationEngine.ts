@@ -1,14 +1,50 @@
-import { SectorRaw, SectorSimulated, SimulationParams, CorridorKPIs } from './types';
+import { SectorRaw, SectorSimulated, SimulationParams, CorridorKPIs, PeopleSocialLens } from './types';
 
 // Centro de referência do Corredor BRT Campo Grande em Campinas (Av. John Boyd Dunlop)
 const LON_CENTER = -47.1300;
 const LAT_CENTER = -22.9310;
 const SCALE = 185; // Escala de graus WGS84/SIRGAS2000 para unidades métricas da cena Three.js
+const BASE_ELEV_M = 552.0; // Altitude mínima na bacia do Rio Capivari no recorte
 
 export function projectCoord(lon: number, lat: number): [number, number] {
   const x = (lon - LON_CENTER) * SCALE * Math.cos((LAT_CENTER * Math.PI) / 180);
   const z = -(lat - LAT_CENTER) * SCALE; // Norte para -Z no Three.js
   return [x, z];
+}
+
+/** Converte a altitude real (m) em altura Y na cena 3D considerando o slider de exagero topográfico */
+export function elevToSceneY(elevM: number, terrainExaggerationPct: number): number {
+  const exag = terrainExaggerationPct / 100;
+  return ((elevM - BASE_ELEV_M) / 110) * 1.45 * exag;
+}
+
+/** Retorna a cor semântica para a lente ativa da Camada Humana ("Quem mora onde em Campinas") */
+export function getPeopleLayerColor(s: SectorSimulated, lens: PeopleSocialLens, isDaylight: boolean): string {
+  if (lens === 'renda') {
+    // Renda Média: Terracota/Coral (baixa renda nas periferias) -> Âmbar -> Azul Petróleo/Esmeralda (alta renda no Centro/Aurélia)
+    const t = Math.max(0, Math.min(1, (s.renda_media_rs - 1600) / 5200));
+    if (t < 0.45) return lerpHex('#e11d48', '#f59e0b', t / 0.45);
+    return lerpHex('#f59e0b', '#0284c7', (t - 0.45) / 0.55);
+  }
+  if (lens === 'chefia_feminina') {
+    // % Chefia Feminina: Lilás Suave -> Roxo Intenso / Magenta (estilo prancha 103 essencial-geo)
+    const t = Math.max(0, Math.min(1, (s.pct_chefia_feminina - 40) / 20));
+    if (t < 0.5) return lerpHex(isDaylight ? '#c4b5fd' : '#6366f1', '#9333ea', t * 2);
+    return lerpHex('#9333ea', '#e11d48', (t - 0.5) * 2);
+  }
+  if (lens === 'raca_cor') {
+    // % População Preta, Parda e Indígena: Areia/Ocre -> Âmbar Queimado -> Rubi Profundo
+    const t = Math.max(0, Math.min(1, (s.pct_negra_indigena - 22) / 48));
+    if (t < 0.5) return lerpHex('#38bdf8', '#f59e0b', t * 2);
+    return lerpHex('#f59e0b', '#dc2626', (t - 0.5) * 2);
+  }
+  if (lens === 'verticalizacao') {
+    // % Apartamentos vs Casas Horizontais: Verde-Oliva/Tijolo (casas horizontais) -> Azul Cobalto (torres)
+    const t = Math.max(0, Math.min(1, s.pct_verticalizacao / 75));
+    if (t < 0.4) return lerpHex('#d97706', '#10b981', t / 0.4);
+    return lerpHex('#10b981', '#2563eb', (t - 0.4) / 0.6);
+  }
+  return getVulnerabilityColor(s.sim_vulnerabilidade_ivsg);
 }
 
 export function simulateSectors(

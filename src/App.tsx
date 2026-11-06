@@ -8,10 +8,13 @@ import { KpiAndTelemetryOverlay } from './components/KpiAndTelemetryOverlay';
 
 export function App() {
   const [params, setParams] = useState<SimulationParams>({
-    zSpread: 65,          // Inicia com as 3 camadas anatômicas explodidas para visualização imediata
+    zSpread: 40,          // Camadas semi-integradas sobre o relevo e tecido urbano 3D
     biomethaneFleet: 45,  // 45% da frota BRT convertida a Biometano CP2B
     greenInfra: 40,       // 40% de expansão de Jardins de Chuva e Arborização
     modalShift: 35,       // 35% de transferência modal Carro -> BRT Campo Grande
+    terrainExaggeration: 65, // Relevo 3D real de Campinas (SRTM 30m: 552m a 771m)
+    peopleLens: 'renda',  // Inicia na Lente Humana ("Quem mora onde em Campinas")
+    visualStyle: 'editorial_daylight', // Estilo Maquete Arquitetônica Clara (como nas imagens de referência)
   });
 
   const [selectedSectorId, setSelectedSectorId] = useState<number | null>(18);
