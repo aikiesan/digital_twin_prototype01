@@ -7,14 +7,49 @@ export type PeopleSocialLens =
 
 export type VisualStyleMode = 'editorial_daylight' | 'scientific_night';
 
+export type ProjectLoadStage = 1 | 2 | 3 | 4;
+
 export interface SimulationParams {
-  zSpread: number;          // 0..100: Explodir Camadas Anatômicas (Eixo Z/Y)
-  biomethaneFleet: number;  // 0..100: Frota BRT a Biometano (Substituição do Diesel)
-  greenInfra: number;       // 0..100: Infraestrutura Verde (Jardins de Chuva e Arborização)
-  modalShift: number;       // 0..100: Transferência Modal (Carro Individual -> BRT)
+  zSpread: number;             // 0..100: Explodir Camadas Anatômicas (Eixo Z/Y)
+  biomethaneFleet: number;     // 0..100: Frota BRT a Biometano (Substituição do Diesel)
+  greenInfra: number;          // 0..100: Infraestrutura Verde (Jardins de Chuva e Arborização)
+  modalShift: number;          // 0..100: Transferência Modal (Carro Individual -> BRT)
   terrainExaggeration: number; // 0..100: Exagero Vertical Topográfico (SRTM 30m Campinas)
   peopleLens: PeopleSocialLens;
   visualStyle: VisualStyleMode;
+  loadStage?: ProjectLoadStage; // 1: Basemap+DEM, 2: Edifícios 3D OSM+Censo, 3: Rede CP2B, 4: Acoplamento Total
+}
+
+export interface OsmBuilding3D {
+  osmId: string;
+  name: string;
+  type: string;
+  tractId: string;
+  district: string;
+  neighborhood: string;
+  centroid: [number, number];
+  footprintAreaM2: number;
+  levels: number;
+  baseElevationM: number;
+  heightM: number;
+  highlightRole: 'standard' | 'cp2b_green' | 'brt_amber' | 'social_red';
+  coords: [number, number][];
+}
+
+export interface Cp2bNode {
+  nodeId: string;
+  name: string;
+  category: 'ETE_SANASA' | 'BIOMETHANE_PLANT' | 'INDUSTRIAL_CODIGESTION' | 'RESEARCH_HUB' | 'BRT_BIOMETHANE_STATION';
+  feedstock: string;
+  treatmentProcess: string;
+  familia?: string;
+  status: string;
+  dboRemovalPct: number;
+  biogasNm3Day: number;
+  biomethaneNm3Day: number;
+  powerKw: number;
+  elevationM: number;
+  coordinates: [number, number];
 }
 
 export interface UrbanBuildingFootprint {
@@ -39,6 +74,7 @@ export interface SectorRaw {
   norm_pos: number;
   centroid: [number, number];
   elevacao_m: number;
+  declividade_pct?: number;
   area_km2: number;
   populacao: number;
   domicilios: number;

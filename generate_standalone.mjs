@@ -9,7 +9,7 @@ const html = `<!DOCTYPE html>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gêmeo Digital Urbano-Energético 3D | Quem Mora Onde em Campinas & Relevo SRTM 30m</title>
+  <title>Gêmeo Digital Urbano-Energético 3D | Campinas Basemap + DEM + 1.850 Edifícios OSM + Rede CP2B</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -25,16 +25,16 @@ const html = `<!DOCTYPE html>
     <div class="p-4 border-b border-slate-800 bg-gradient-to-br from-slate-900 via-slate-950 to-emerald-950/30">
       <div class="flex items-center justify-between mb-2">
         <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-          NIPE / UNICAMP · CP2B · CENSO 2022
+          DOCKER POSTGIS · OSM 3D · CP2B · CENSO 2022
         </span>
         <button id="btn-style" onclick="toggleVisualStyle()" class="px-2.5 py-1 rounded-lg text-[10px] font-mono font-semibold bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700">
           ☀ Maquete Clara
         </button>
       </div>
       <h1 class="text-base font-bold text-slate-100">Gêmeo Digital Urbano-Energético 3D</h1>
-      <p class="text-xs text-sky-300 font-medium mt-0.5">Corredor BRT Campo Grande · Campinas-SP (IBGE 3509502)</p>
+      <p class="text-xs text-sky-300 font-medium mt-0.5">Campinas-SP (IBGE 3509502) · Corredor BRT Campo Grande</p>
       <p class="text-[11px] text-slate-400 mt-1 leading-snug">
-        Relevo 3D real (SRTM 30m: 552m–771m), Edifícios 3D humanizados e Demografia por Setor Censitário (Censo 2022).
+        Basemap OSM (2.200 vias, rios e parques) + DEM 30m (547m–789m) + 1.850 Edifícios 3D OSM + Rede Completa CP2B (30 ETEs SANASA, 40 Indústrias, Delta A e OneBio).
       </p>
     </div>
 
@@ -42,7 +42,7 @@ const html = `<!DOCTYPE html>
     <div class="p-3.5 border-b border-slate-800 bg-fuchsia-950/15">
       <div class="flex justify-between items-center mb-2">
         <span class="text-xs font-bold text-fuchsia-300">Camada Humana: Quem Mora Onde em Campinas</span>
-        <span class="text-[10px] font-mono text-slate-400">Lente Social</span>
+        <span class="text-[10px] font-mono text-slate-400">Censo 2022</span>
       </div>
       <div class="grid grid-cols-2 gap-1.5" id="lens-buttons">
         <button onclick="setLens('renda')" data-lens="renda" class="lens-btn px-2.5 py-1.5 rounded-lg text-left text-[11px] font-semibold border bg-fuchsia-600/30 border-fuchsia-400 text-white">Renda Familiar (R$)</button>
@@ -55,77 +55,130 @@ const html = `<!DOCTYPE html>
 
     <!-- Presets -->
     <div class="px-4 py-2 border-b border-slate-800 bg-slate-900/40 flex gap-1.5">
-      <button onclick="setPreset(25, 0, 0, 0)" class="flex-1 py-1.5 rounded-lg text-[11px] font-medium bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700">Baseline</button>
-      <button onclick="setPreset(55, 60, 55, 50)" class="flex-1 py-1.5 rounded-lg text-[11px] font-medium bg-emerald-950/70 hover:bg-emerald-900 text-emerald-200 border border-emerald-600/40">Meta CP2B 2030</button>
-      <button onclick="setPreset(85, 100, 100, 85)" class="flex-1 py-1.5 rounded-lg text-[11px] font-medium bg-sky-950/70 hover:bg-sky-900 text-sky-200 border border-sky-500/40">100% Circular</button>
+      <button onclick="setPreset(20, 0, 0, 0)" class="flex-1 py-1.5 rounded-lg text-[11px] font-medium bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700">Baseline</button>
+      <button onclick="setPreset(50, 65, 60, 55)" class="flex-1 py-1.5 rounded-lg text-[11px] font-medium bg-emerald-950/70 hover:bg-emerald-900 text-emerald-200 border border-emerald-600/40">Meta CP2B 2030</button>
+      <button onclick="setPreset(80, 100, 100, 85)" class="flex-1 py-1.5 rounded-lg text-[11px] font-medium bg-sky-950/70 hover:bg-sky-900 text-sky-200 border border-sky-500/40">100% Circular</button>
     </div>
 
     <div class="p-3.5 space-y-2.5 flex-1">
       <div class="p-2.5 rounded-xl bg-slate-900/75 border border-slate-800">
         <div class="flex justify-between items-center mb-1">
-          <span class="text-xs font-semibold text-sky-300">1. Explodir Camadas SVG (Z-Spread)</span>
-          <span id="val-zSpread" class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-sky-500/20 text-sky-300">40%</span>
+          <span class="text-xs font-semibold text-sky-300">1. Explodir Camadas (Z-Spread)</span>
+          <span id="val-zSpread" class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-sky-500/20 text-sky-300">30%</span>
         </div>
-        <input id="sl-zSpread" type="range" min="0" max="100" value="40" class="w-full h-1.5 bg-slate-800 rounded-lg cursor-pointer" />
+        <input id="sl-zSpread" type="range" min="0" max="100" value="30" class="w-full h-1.5 bg-slate-800 rounded-lg cursor-pointer" />
       </div>
 
       <div class="p-2.5 rounded-xl bg-slate-900/75 border border-slate-800">
         <div class="flex justify-between items-center mb-1">
-          <span class="text-xs font-semibold text-indigo-300">Relevo 3D Campinas (SRTM 30m · 552m–771m)</span>
-          <span id="val-terrain" class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300">65%</span>
+          <span class="text-xs font-semibold text-indigo-300">Relevo DEM Campinas (22S48_ZN · 547m–789m)</span>
+          <span id="val-terrain" class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300">70%</span>
         </div>
-        <input id="sl-terrain" type="range" min="0" max="100" value="65" class="w-full h-1.5 bg-slate-800 rounded-lg cursor-pointer" style="accent-color:#6366f1" />
+        <input id="sl-terrain" type="range" min="0" max="100" value="70" class="w-full h-1.5 bg-slate-800 rounded-lg cursor-pointer" style="accent-color:#6366f1" />
       </div>
 
       <div class="p-2.5 rounded-xl bg-slate-900/75 border border-slate-800">
         <div class="flex justify-between items-center mb-1">
-          <span class="text-xs font-semibold text-emerald-300">2. Frota BRT a Biometano (CP2B)</span>
-          <span id="val-bio" class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300">45%</span>
+          <span class="text-xs font-semibold text-emerald-300">2. Frota BRT a Biometano (Rede CP2B)</span>
+          <span id="val-bio" class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300">55%</span>
         </div>
-        <input id="sl-bio" type="range" min="0" max="100" value="45" class="w-full h-1.5 bg-slate-800 rounded-lg cursor-pointer" style="accent-color:#10b981" />
+        <input id="sl-bio" type="range" min="0" max="100" value="55" class="w-full h-1.5 bg-slate-800 rounded-lg cursor-pointer" style="accent-color:#10b981" />
       </div>
 
       <div class="p-2.5 rounded-xl bg-slate-900/75 border border-slate-800">
         <div class="flex justify-between items-center mb-1">
-          <span class="text-xs font-semibold text-teal-300">3. Infraestrutura Verde & Jardins Chuva</span>
-          <span id="val-green" class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-teal-500/20 text-teal-300">40%</span>
+          <span class="text-xs font-semibold text-teal-300">3. Infraestrutura Verde & Digestato</span>
+          <span id="val-green" class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-teal-500/20 text-teal-300">45%</span>
         </div>
-        <input id="sl-green" type="range" min="0" max="100" value="40" class="w-full h-1.5 bg-slate-800 rounded-lg cursor-pointer" style="accent-color:#14b8a6" />
+        <input id="sl-green" type="range" min="0" max="100" value="45" class="w-full h-1.5 bg-slate-800 rounded-lg cursor-pointer" style="accent-color:#14b8a6" />
       </div>
 
       <div class="p-2.5 rounded-xl bg-slate-900/75 border border-slate-800">
         <div class="flex justify-between items-center mb-1">
           <span class="text-xs font-semibold text-amber-300">4. Transferência Modal (Carro → BRT)</span>
-          <span id="val-modal" class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300">35%</span>
+          <span id="val-modal" class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300">40%</span>
         </div>
-        <input id="sl-modal" type="range" min="0" max="100" value="35" class="w-full h-1.5 bg-slate-800 rounded-lg cursor-pointer" style="accent-color:#f59e0b" />
+        <input id="sl-modal" type="range" min="0" max="100" value="40" class="w-full h-1.5 bg-slate-800 rounded-lg cursor-pointer" style="accent-color:#f59e0b" />
+      </div>
+
+      <!-- Legenda de Cores dos Edifícios 3D OSM -->
+      <div class="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 text-[10px] font-mono space-y-1">
+        <div class="text-slate-300 font-bold uppercase">Legenda Edifícios 3D OSM (1.850 Prédios):</div>
+        <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-sm bg-slate-100 border border-slate-400"></span><span>Malha Urbana Padrão (Maquete Branca)</span></div>
+        <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-sm bg-emerald-500"></span><span>Âncoras CP2B / Saúde / Educação / Mitigado</span></div>
+        <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-sm bg-amber-400"></span><span>Polos Comerciais / Terminais BRT / Indústrias</span></div>
+        <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-sm bg-rose-500"></span><span>Crítico Ilha de Calor / Alta Vulnerabilidade</span></div>
       </div>
     </div>
   </aside>
 
   <!-- ÁREA 3D E KPIS -->
   <main class="flex-1 h-full relative">
-    <div class="absolute top-4 right-4 z-10 flex gap-3 pointer-events-none">
-      <div class="bg-slate-950/90 backdrop-blur-md border border-slate-800 rounded-xl px-4 py-3 shadow-xl min-w-[215px]">
+    <!-- TOPO CENTRAL: Orquestrador de Carregamento das 4 Etapas -->
+    <div class="absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl bg-slate-950/90 backdrop-blur-xl border border-slate-700/80 shadow-2xl">
+      <button onclick="playLoadStages()" class="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-mono font-bold text-[11px] transition shadow-md">
+        ▶ Construir Camadas
+      </button>
+      <button id="st-btn-1" onclick="setLoadStage(1)" class="px-2.5 py-1 rounded-xl text-left font-mono text-[10px] border bg-slate-900 border-slate-700 text-slate-200">
+        <strong>1. Basemap + DEM 30m</strong><br/><span class="text-[9px] text-slate-400">2.200 Vias/Rios OSM</span>
+      </button>
+      <button id="st-btn-2" onclick="setLoadStage(2)" class="px-2.5 py-1 rounded-xl text-left font-mono text-[10px] border bg-slate-900 border-slate-700 text-slate-200">
+        <strong>2. Edifícios 3D OSM</strong><br/><span class="text-[9px] text-slate-400">1.850 Prédios + Censo</span>
+      </button>
+      <button id="st-btn-3" onclick="setLoadStage(3)" class="px-2.5 py-1 rounded-xl text-left font-mono text-[10px] border bg-slate-900 border-slate-700 text-slate-200">
+        <strong>3. Rede CP2B (77 Nós)</strong><br/><span class="text-[9px] text-slate-400">30 ETEs + 40 Ind. + OneBio</span>
+      </button>
+      <button id="st-btn-4" onclick="setLoadStage(4)" class="px-2.5 py-1 rounded-xl text-left font-mono text-[10px] border bg-sky-500/25 border-sky-400 text-sky-200">
+        <strong>4. Simulação V1↔V2↔V3</strong><br/><span class="text-[9px] text-slate-300">Acoplamento Total</span>
+      </button>
+    </div>
+
+    <!-- TOPO ESQUERDO: Botão Matriz CP2B -->
+    <div class="absolute top-16 left-4 z-20">
+      <button onclick="toggleCp2bModal()" class="px-3 py-2 rounded-xl bg-slate-950/90 hover:bg-slate-900 border border-emerald-500/50 text-xs font-mono text-emerald-300 shadow-xl">
+        ⚡ Inventário CP2B Campinas (526,02 GWh/ano · 31.525 Nm³/d · 77 Nós)
+      </button>
+      <div id="cp2b-modal" class="hidden mt-2 w-[520px] bg-slate-950/95 backdrop-blur-2xl border border-emerald-500/50 rounded-2xl p-4 shadow-2xl text-xs font-mono space-y-2.5">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-1.5">
+          <span class="text-emerald-400 font-bold">INVENTÁRIO OFICIAL CP2B / NIPE-UNICAMP · CAMPINAS (3509502)</span>
+          <button onclick="toggleCp2bModal()" class="text-slate-400 hover:text-white">✕</button>
+        </div>
+        <div class="grid grid-cols-4 gap-2">
+          <div class="p-2 rounded bg-slate-900 border border-slate-800"><div class="text-[9px] text-slate-400">RSU / FORSU</div><div class="text-emerald-400 font-bold">397,9 GWh</div></div>
+          <div class="p-2 rounded bg-slate-900 border border-slate-800"><div class="text-[9px] text-slate-400">SILV. + PODA RPO</div><div class="text-teal-300 font-bold">41,2 GWh</div></div>
+          <div class="p-2 rounded bg-slate-900 border border-slate-800"><div class="text-[9px] text-slate-400">30 ETEs SANASA</div><div class="text-sky-300 font-bold">2.372 Nm³/d</div></div>
+          <div class="p-2 rounded bg-slate-900 border border-slate-800"><div class="text-[9px] text-slate-400">AGRO + 40 IND.</div><div class="text-amber-300 font-bold">86,9 GWh</div></div>
+        </div>
+        <div class="text-[10px] text-slate-300 space-y-1">
+          <div>• <strong>FORSU</strong>: FDE 25,2% · BMP 310 Nm³/tSV | <strong>ORGANICO_RSU</strong>: FDE 20,5% · BMP 270 Nm³/tSV</div>
+          <div>• <strong>LODO_PRIMARIO</strong> (ETE Piçarrão / Capivari II / Anhumas): FDE 48,8% · BMP 310 Nm³/tSV</div>
+          <div>• <strong>USINA ONEBIO PAULÍNIA (ANP)</strong>: 106.867 Nm³/d biometano | <strong>COMPLEXO DELTA A</strong>: 25.693 Nm³/d</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOPO DIREITO: KPIs -->
+    <div class="absolute top-16 right-4 z-10 flex flex-col gap-2 pointer-events-none">
+      <div class="bg-slate-950/90 backdrop-blur-md border border-slate-800 rounded-xl px-4 py-2.5 shadow-xl min-w-[225px]">
         <div class="text-[10px] font-mono text-slate-400">BALANÇO LÍQUIDO DE CARBONO</div>
-        <div class="mt-0.5"><span id="kpi-co2" class="text-2xl font-bold font-mono text-slate-100">0</span> <span class="text-xs font-mono text-slate-400">tCO₂eq/ano</span></div>
-        <div id="kpi-co2-sub" class="text-[11px] font-mono text-emerald-400 mt-1">Mitigado: 0 t/ano</div>
+        <div class="mt-0.5"><span id="kpi-co2" class="text-xl font-bold font-mono text-slate-100">0</span> <span class="text-xs font-mono text-slate-400">tCO₂eq/ano</span></div>
+        <div id="kpi-co2-sub" class="text-[10px] font-mono text-emerald-400 mt-0.5">Mitigado: 0 t/ano</div>
       </div>
-      <div class="bg-slate-950/90 backdrop-blur-md border border-slate-800 rounded-xl px-4 py-3 shadow-xl min-w-[215px]">
+      <div class="bg-slate-950/90 backdrop-blur-md border border-slate-800 rounded-xl px-4 py-2.5 shadow-xl min-w-[225px]">
         <div class="text-[10px] font-mono text-slate-400">REDUÇÃO EXPOSIÇÃO A MP2.5</div>
-        <div class="mt-0.5"><span id="kpi-mp25" class="text-2xl font-bold font-mono text-sky-300">0%</span> <span class="text-xs font-mono text-slate-400">pop. vulnerável</span></div>
-        <div id="kpi-bio-sub" class="text-[11px] font-mono text-emerald-300 mt-1">Biometano: 0 Nm³/d</div>
+        <div class="mt-0.5"><span id="kpi-mp25" class="text-xl font-bold font-mono text-sky-300">0%</span> <span class="text-xs font-mono text-slate-400">pop. vulnerável</span></div>
+        <div id="kpi-bio-sub" class="text-[10px] font-mono text-emerald-300 mt-0.5">Biometano: 0 Nm³/d</div>
       </div>
-      <div class="bg-slate-950/90 backdrop-blur-md border border-slate-800 rounded-xl px-4 py-3 shadow-xl min-w-[215px]">
+      <div class="bg-slate-950/90 backdrop-blur-md border border-slate-800 rounded-xl px-4 py-2.5 shadow-xl min-w-[225px]">
         <div class="text-[10px] font-mono text-slate-400">ÍNDICE JUSTIÇA CLIMÁTICA</div>
-        <div class="mt-0.5"><span id="kpi-justica" class="text-2xl font-bold font-mono text-fuchsia-300">0</span> <span class="text-xs font-mono text-slate-400">/ 100 pts</span></div>
-        <div class="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+        <div class="mt-0.5"><span id="kpi-justica" class="text-xl font-bold font-mono text-fuchsia-300">0</span> <span class="text-xs font-mono text-slate-400">/ 100 pts</span></div>
+        <div class="w-full bg-slate-800 h-1.5 rounded-full mt-1.5 overflow-hidden">
           <div id="kpi-justica-bar" class="bg-gradient-to-r from-fuchsia-500 via-sky-400 to-emerald-400 h-full" style="width:50%"></div>
         </div>
       </div>
     </div>
 
-    <div id="telemetry-card" class="absolute bottom-5 right-5 z-20 w-[420px] bg-slate-950/95 backdrop-blur-xl border border-sky-500/50 rounded-2xl p-4 shadow-2xl"></div>
+    <div id="telemetry-card" class="absolute bottom-5 right-5 z-20 w-[415px] bg-slate-950/95 backdrop-blur-xl border border-sky-500/50 rounded-2xl p-4 shadow-2xl"></div>
     <div id="canvas-container" class="w-full h-full"></div>
   </main>
 
@@ -133,7 +186,7 @@ const html = `<!DOCTYPE html>
     const CAMPINAS_DATA = ${JSON.stringify(data)};
     const LON_CENTER = -47.1300, LAT_CENTER = -22.9310, SCALE = 185, BASE_ELEV_M = 552.0;
 
-    let params = { zSpread: 40, terrain: 65, bio: 45, green: 40, modal: 35, lens: 'renda', isDaylight: true };
+    let params = { zSpread: 30, terrain: 70, bio: 55, green: 45, modal: 40, lens: 'renda', isDaylight: true, loadStage: 4 };
     let activeSectorId = 18;
 
     function projectCoord(lon, lat) {
@@ -149,10 +202,11 @@ const html = `<!DOCTYPE html>
     function lerpHex(h1, h2, f) {
       f = Math.max(0, Math.min(1, f));
       const c1 = parseInt(h1.slice(1), 16), c2 = parseInt(h2.slice(1), 16);
-      const r = Math.round(((c1>>16)&255) + (((c2>>16)&255) - ((c1>>16)&255))*f);
+      const r = Math.round(((c1>>16)&255) + (((c2>>16)&255) - ((c1>>16)&16))*f);
+      const r2 = Math.round(((c1>>16)&255) + (((c2>>16)&255) - ((c1>>16)&255))*f);
       const g = Math.round(((c1>>8)&255) + (((c2>>8)&255) - ((c1>>8)&255))*f);
       const b = Math.round((c1&255) + ((c2&255) - (c1&255))*f);
-      return '#' + ((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
+      return '#' + ((1<<24)+(r2<<16)+(g<<8)+b).toString(16).slice(1);
     }
 
     function getPeopleColor(s, simIvsg) {
@@ -183,11 +237,11 @@ const html = `<!DOCTYPE html>
 
     const container = document.getElementById('canvas-container');
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color('#e2e8f0');
-    scene.fog = new THREE.Fog('#e2e8f0', 30, 72);
+    scene.background = new THREE.Color('#dbe4ee');
+    scene.fog = new THREE.Fog('#dbe4ee', 32, 78);
 
-    const camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 220);
-    camera.position.set(3, 13, 19);
+    const camera = new THREE.PerspectiveCamera(38, container.clientWidth / container.clientHeight, 0.1, 240);
+    camera.position.set(2.5, 11.5, 17.5);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(container.clientWidth, container.clientHeight);
@@ -198,38 +252,129 @@ const html = `<!DOCTYPE html>
     const controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.06;
-    controls.target.set(0, 2.0, 0);
+    controls.target.set(0, 1.5, 0);
 
-    scene.add(new THREE.AmbientLight('#ffffff', 0.82));
-    const dir1 = new THREE.DirectionalLight('#fffbeb', 1.45);
-    dir1.position.set(18, 32, 20);
+    scene.add(new THREE.AmbientLight('#ffffff', 0.92));
+    const dir1 = new THREE.DirectionalLight('#fffef5', 1.65);
+    dir1.position.set(18, 34, 22);
     dir1.castShadow = true;
     scene.add(dir1);
 
-    // Relevo 3D Real de Campinas (SRTM 30m)
+    const basemapGroup = new THREE.Group();
+    const osmBuildingsGroup = new THREE.Group();
+    const layer0 = new THREE.Group();
+    const layer1 = new THREE.Group();
+    const layer2 = new THREE.Group();
+    scene.add(basemapGroup, osmBuildingsGroup, layer0, layer1, layer2);
+
+    // 1. Relevo 3D Real de Campinas (SRTM 30m - 22S48_ZN.tif)
     const rel = CAMPINAS_DATA.relevo_3d;
     const [xMin, zMax] = projectCoord(rel.lon_min, rel.lat_min);
     const [xMax, zMin] = projectCoord(rel.lon_max, rel.lat_max);
     const terrainGeo = new THREE.PlaneGeometry(xMax - xMin, zMax - zMin, rel.cols - 1, rel.rows - 1);
     terrainGeo.rotateX(-Math.PI / 2);
-    const terrainMat = new THREE.MeshStandardMaterial({ color: '#dde5d7', roughness: 0.88, metalness: 0.05 });
+    const terrainMat = new THREE.MeshStandardMaterial({ color: '#dde5ed', roughness: 0.85, metalness: 0.04 });
     const terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
     terrainMesh.position.set((xMin + xMax) / 2, 0, (zMin + zMax) / 2);
     terrainMesh.receiveShadow = true;
-    scene.add(terrainMesh);
+    basemapGroup.add(terrainMesh);
 
-    const layer0 = new THREE.Group();
-    const layer1 = new THREE.Group();
-    const layer2 = new THREE.Group();
-    scene.add(layer0, layer1, layer2);
+    function sampleElev(lon, lat) {
+      const cIdx = Math.max(0, Math.min(rel.cols - 1, Math.round(((lon - rel.lon_min) / (rel.lon_max - rel.lon_min)) * (rel.cols - 1))));
+      const rIdx = Math.max(0, Math.min(rel.rows - 1, Math.round(((rel.lat_max - lat) / (rel.lat_max - rel.lat_min)) * (rel.rows - 1))));
+      return (rel.heights_m[rIdx] && rel.heights_m[rIdx][cIdx]) ? rel.heights_m[rIdx][cIdx] : 640;
+    }
+
+    // Basemap: Vias OSM, Rios OSM e Gasodutos Comgás/CP2B
+    if (CAMPINAS_DATA.basemap) {
+      (CAMPINAS_DATA.basemap.roads || []).slice(0, 1100).forEach(r => {
+        if (!r.coords || r.coords.length < 2) return;
+        const pts = r.coords.map(([lon, lat]) => {
+          const [rx, rz] = projectCoord(lon, lat);
+          return new THREE.Vector3(rx, elevToY(sampleElev(lon, lat)) - 0.04, rz);
+        });
+        const geo = new THREE.BufferGeometry().setFromPoints(pts);
+        const mat = new THREE.LineBasicMaterial({ color: r.isBrtCorridor ? '#0284c7' : '#64748b', transparent: true, opacity: r.isBrtCorridor ? 0.9 : 0.48 });
+        basemapGroup.add(new THREE.Line(geo, mat));
+      });
+
+      (CAMPINAS_DATA.basemap.waterways || []).slice(0, 300).forEach(w => {
+        if (!w.coords || w.coords.length < 2) return;
+        const pts = w.coords.map(([lon, lat]) => {
+          const [wx, wz] = projectCoord(lon, lat);
+          return new THREE.Vector3(wx, elevToY(sampleElev(lon, lat)) - 0.05, wz);
+        });
+        const geo = new THREE.BufferGeometry().setFromPoints(pts);
+        basemapGroup.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ color: '#38bdf8', transparent: true, opacity: 0.8 })));
+      });
+
+      (CAMPINAS_DATA.basemap.gasPipelines || []).forEach(p => {
+        if (!p.coords || p.coords.length < 2) return;
+        const pts = p.coords.map(([lon, lat]) => {
+          const [px, pz] = projectCoord(lon, lat);
+          return new THREE.Vector3(px, elevToY(sampleElev(lon, lat)) + 0.03, pz);
+        });
+        const geo = new THREE.BufferGeometry().setFromPoints(pts);
+        const isCp2b = p.kind.includes('CP2B');
+        layer1.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ color: isCp2b ? '#10b981' : '#f59e0b', transparent: true, opacity: 0.9 })));
+      });
+    }
+
+    // 2. Edifícios 3D Reais do OpenStreetMap (1.850 Footprints) ancorados no DEM
+    const osmBuildingMaterials = {
+      standard: new THREE.MeshStandardMaterial({ color: '#f8fafc', roughness: 0.42, metalness: 0.08 }),
+      cp2b_green: new THREE.MeshStandardMaterial({ color: '#22c55e', roughness: 0.28, metalness: 0.18 }),
+      brt_amber: new THREE.MeshStandardMaterial({ color: '#eab308', roughness: 0.28, metalness: 0.18 }),
+      social_red: new THREE.MeshStandardMaterial({ color: '#ef4444', roughness: 0.28, metalness: 0.18 })
+    };
+    const edgeMat = new THREE.LineBasicMaterial({ color: '#94a3b8', transparent: true, opacity: 0.45 });
+
+    (CAMPINAS_DATA.osmBuildings3D || []).slice(0, 1350).forEach(b => {
+      if (!b.coords || b.coords.length < 4) return;
+      const [cx, cz] = projectCoord(b.centroid[0], b.centroid[1]);
+      const baseY = elevToY(b.baseElevationM) - 0.04;
+      const h = Math.max(0.14, (b.heightM / 32) * 0.95);
+      const shape = new THREE.Shape();
+      b.coords.forEach(([lon, lat], idx) => {
+        const [px, pz] = projectCoord(lon, lat);
+        if (idx === 0) shape.moveTo(px - cx, -(pz - cz));
+        else shape.lineTo(px - cx, -(pz - cz));
+      });
+      shape.closePath();
+      const geo = new THREE.ExtrudeGeometry(shape, { depth: h, bevelEnabled: false });
+      geo.rotateX(-Math.PI / 2);
+      const mat = osmBuildingMaterials[b.highlightRole] || osmBuildingMaterials.standard;
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(cx, baseY, cz);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      osmBuildingsGroup.add(mesh);
+
+      const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geo, 25), edgeMat);
+      edges.position.set(cx, baseY, cz);
+      osmBuildingsGroup.add(edges);
+    });
+
+    // 3. Nós Reais da Rede CP2B (ETEs SANASA, Usinas Biometano, Indústrias e Terminais BRT)
+    const cp2bNodes = (CAMPINAS_DATA.cp2b && CAMPINAS_DATA.cp2b.nodes) ? CAMPINAS_DATA.cp2b.nodes : [];
+    cp2bNodes.forEach(node => {
+      if (node.coordinates[0] < -47.245 || node.coordinates[0] > -46.965 || node.coordinates[1] < -23.015 || node.coordinates[1] > -22.745) return;
+      const [nx, nz] = projectCoord(node.coordinates[0], node.coordinates[1]);
+      const ny = elevToY(node.elevationM || 620);
+      const isPlant = node.category === 'BIOMETHANE_PLANT' || node.category === 'RESEARCH_HUB';
+      const isEte = node.category === 'ETE_SANASA';
+      const col = isPlant ? '#059669' : isEte ? '#0284c7' : '#d97706';
+      const rad = isPlant ? 0.42 : isEte ? 0.25 : 0.16;
+      const m = new THREE.Mesh(
+        new THREE.CylinderGeometry(rad, rad * 1.15, isPlant ? 0.45 : 0.28, 18),
+        new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.4 })
+      );
+      m.position.set(nx, ny + 0.2, nz);
+      layer1.add(m);
+    });
 
     const hub = CAMPINAS_DATA.corredor_brt.hubs_biometano[0];
     const [hubX, hubZ] = projectCoord(hub.lon, hub.lat);
-    const hubMesh = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.45, 0.55, 0.55, 24),
-      new THREE.MeshStandardMaterial({ color: '#059669', emissive: '#10b981', emissiveIntensity: 0.5 })
-    );
-    layer1.add(hubMesh);
 
     const sectorObjects = [];
     const pickableMeshes = [];
@@ -248,40 +393,39 @@ const html = `<!DOCTYPE html>
       const group0 = new THREE.Group();
       layer0.add(group0);
 
-      const geo0 = new THREE.ExtrudeGeometry(shape, { depth: 0.11, bevelEnabled: true, bevelSize: 0.015, bevelThickness: 0.015 });
+      const geo0 = new THREE.ExtrudeGeometry(shape, { depth: 0.08, bevelEnabled: true, bevelSize: 0.012, bevelThickness: 0.012 });
       geo0.rotateX(-Math.PI / 2);
-      const mat0 = new THREE.MeshStandardMaterial({ color: '#38bdf8', roughness: 0.55 });
+      const mat0 = new THREE.MeshStandardMaterial({ color: '#38bdf8', roughness: 0.55, transparent: true, opacity: 0.72 });
       const mesh0 = new THREE.Mesh(geo0, mat0);
       mesh0.userData = { sectorId: s.id };
       group0.add(mesh0);
 
-      // Edifícios 3D humanizados dentro do setor
       const bldgMeshes = [];
       (s.buildings || []).forEach((b, bIdx) => {
         const [bx, bz] = projectCoord(b.lon, b.lat);
-        const h = Math.max(0.12, b.pavimentos * 0.085);
-        const w = Math.max(0.11, (b.largura_m / 100) * 1.15);
-        const d = Math.max(0.11, (b.profundidade_m / 100) * 1.15);
+        const h = Math.max(0.12, b.pavimentos * 0.082);
+        const w = Math.max(0.11, (b.largura_m / 100) * 1.1);
+        const d = Math.max(0.11, (b.profundidade_m / 100) * 1.1);
         const bMat = new THREE.MeshStandardMaterial({ color: '#f8fafc', roughness: 0.35 });
         const bMesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), bMat);
-        bMesh.position.set(bx - cx, 0.12 + h / 2, bz - cz);
+        bMesh.position.set(bx - cx, 0.09 + h / 2, bz - cz);
         bMesh.rotation.y = b.rot_rad;
         bMesh.userData = { sectorId: s.id };
         group0.add(bMesh);
-        bldgMeshes.push({ mesh: bMesh, mat: bMat, isAccent: bIdx % 5 === 0 });
+        bldgMeshes.push({ mesh: bMesh, mat: bMat, isAccent: bIdx % 6 === 0 });
         pickableMeshes.push(bMesh);
       });
 
       const geoUnit = new THREE.ExtrudeGeometry(shape, { depth: 1.0, bevelEnabled: false });
       geoUnit.rotateX(-Math.PI / 2);
 
-      const mat1 = new THREE.MeshStandardMaterial({ color: '#10b981', transparent: true, opacity: 0.65 });
+      const mat1 = new THREE.MeshStandardMaterial({ color: '#10b981', transparent: true, opacity: 0.55 });
       const mesh1 = new THREE.Mesh(geoUnit, mat1);
       mesh1.scale.set(0.88, 0.35, 0.88);
       mesh1.userData = { sectorId: s.id };
       layer1.add(mesh1);
 
-      const mat2 = new THREE.MeshStandardMaterial({ color: '#f59e0b', transparent: true, opacity: 0.86 });
+      const mat2 = new THREE.MeshStandardMaterial({ color: '#f59e0b', transparent: true, opacity: 0.84 });
       const mesh2 = new THREE.Mesh(geoUnit, mat2);
       mesh2.scale.set(0.74, 1.0, 0.74);
       mesh2.userData = { sectorId: s.id };
@@ -324,17 +468,25 @@ const html = `<!DOCTYPE html>
       for (let r = 0; r < rel.rows; r++) {
         for (let c = 0; c < rel.cols; c++) {
           const idx = r * rel.cols + c;
-          posAttr.setY(idx, elevToY(rel.heights_m[r][c]) - 0.08);
+          posAttr.setY(idx, elevToY(rel.heights_m[r][c]) - 0.12);
         }
       }
       posAttr.needsUpdate = true;
       terrainGeo.computeVertexNormals();
-      hubMesh.position.set(hubX, elevToY(hub.elev_m || 610) + 0.3, hubZ);
     }
 
     function updateSimulation() {
       updateTerrainGeometry();
       const bio = params.bio / 100, green = params.green / 100, modal = params.modal / 100;
+      const mitigationScore = bio * 0.55 + green * 0.45;
+      osmBuildingMaterials.social_red.color.set(mitigationScore > 0.7 ? '#22c55e' : mitigationScore > 0.4 ? '#eab308' : '#ef4444');
+      osmBuildingMaterials.brt_amber.color.set(mitigationScore > 0.75 ? '#10b981' : '#eab308');
+
+      osmBuildingsGroup.visible = params.loadStage >= 2;
+      layer0.visible = params.loadStage >= 2;
+      layer1.visible = params.loadStage >= 3;
+      layer2.visible = params.loadStage >= 4 && params.zSpread > 4;
+
       let totCo2Base = 0, totCo2Sim = 0, totBioCredit = 0, wMp25Base = 0, wMp25Sim = 0, sumJustica = 0, totBioNm3 = 0;
 
       simulatedSectors = sectorObjects.map((obj) => {
@@ -411,7 +563,7 @@ const html = `<!DOCTYPE html>
         <div class="border-b border-slate-800 pb-2 mb-2.5">
           <div class="flex items-center gap-2">
             <span class="px-2 py-0.5 rounded bg-sky-500/20 text-[10px] font-mono font-bold text-sky-300">IBGE \${active.cd_setor}</span>
-            <span class="text-[11px] font-mono text-indigo-300">Alt: \${active.elevacao_m}m</span>
+            <span class="text-[11px] font-mono text-indigo-300">Alt DEM: \${active.elevacao_m}m</span>
             <span class="text-[11px] font-mono text-slate-400">km \${active.km_corredor}</span>
           </div>
           <h3 class="text-sm font-bold text-slate-100 mt-1">\${active.nome_local}</h3>
@@ -438,6 +590,28 @@ const html = `<!DOCTYPE html>
       \`;
     }
 
+    window.setLoadStage = function(st) {
+      params.loadStage = st;
+      for (let i = 1; i <= 4; i++) {
+        const btn = document.getElementById('st-btn-' + i);
+        btn.className = 'px-2.5 py-1 rounded-xl text-left font-mono text-[10px] border ' +
+          (i === st ? 'bg-sky-500/25 border-sky-400 text-sky-200' : 'bg-slate-900 border-slate-700 text-slate-200');
+      }
+      updateSimulation();
+    };
+
+    window.playLoadStages = function() {
+      setLoadStage(1);
+      setTimeout(() => setLoadStage(2), 1400);
+      setTimeout(() => setLoadStage(3), 2800);
+      setTimeout(() => setLoadStage(4), 4200);
+    };
+
+    window.toggleCp2bModal = function() {
+      const el = document.getElementById('cp2b-modal');
+      el.classList.toggle('hidden');
+    };
+
     window.setLens = function(lens) {
       params.lens = lens;
       document.querySelectorAll('.lens-btn').forEach(btn => {
@@ -451,10 +625,11 @@ const html = `<!DOCTYPE html>
 
     window.toggleVisualStyle = function() {
       params.isDaylight = !params.isDaylight;
-      const bg = params.isDaylight ? '#e2e8f0' : '#020617';
+      const bg = params.isDaylight ? '#dbe4ee' : '#020617';
       scene.background.set(bg);
       scene.fog.color.set(bg);
-      terrainMat.color.set(params.isDaylight ? '#dde5d7' : '#0d1b2a');
+      terrainMat.color.set(params.isDaylight ? '#dde5ed' : '#0d1b2a');
+      osmBuildingMaterials.standard.color.set(params.isDaylight ? '#f8fafc' : '#cbd5e1');
       document.getElementById('btn-style').textContent = params.isDaylight ? '☀ Maquete Clara' : '🌙 Noturno Lab';
       updateSimulation();
     };
@@ -499,9 +674,9 @@ const html = `<!DOCTYPE html>
     function animate() {
       requestAnimationFrame(animate);
       const t = clock.getElapsedTime();
-      const targetS = params.zSpread / 100;
-      layer1.position.y += ((0.35 + targetS * 4.5) - layer1.position.y) * 0.1;
-      layer2.position.y += ((0.75 + targetS * 9.2) - layer2.position.y) * 0.1;
+      const effSpread = params.loadStage >= 4 ? (params.zSpread / 100) : 0;
+      layer1.position.y += ((0.35 + effSpread * 4.5) - layer1.position.y) * 0.1;
+      layer2.position.y += ((0.75 + effSpread * 9.2) - layer2.position.y) * 0.1;
 
       const speed = 0.2 + (params.bio / 100) * 0.6;
       particles.forEach(p => {

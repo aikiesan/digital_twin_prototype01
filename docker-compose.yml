@@ -1,0 +1,58 @@
+version: "3.9"
+
+services:
+  # 1. Banco de Dados Espacial PostGIS 16 + 3.4 (Campinas Digital Twin)
+  postgis:
+    image: postgis/postgis:16-3.4-alpine
+    container_name: campinas_twin_postgis
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-cp2b_twin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cp2b_campinas_2026}
+      POSTGRES_DB: ${POSTGRES_DB:-campinas_digital_twin}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgis_data:/var/lib/postgresql/data
+      - ./docker/postgis/init:/docker-entrypoint-initdb.d:ro
+      - ./public/data:/data/campinas:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cp2b_twin -d campinas_digital_twin"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # 2. Servidor de Vector Tiles MVT em Rust (MapLibre Martin) acoplado ao PostGIS
+  martin:
+    image: ghcr.io/maplibre/martin:v0.14.2
+    container_name: campinas_twin_martin_tiles
+    restart: unless-stopped
+    depends_on:
+      postgis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://cp2b_twin:cp2b_campinas_2026@postgis:5432/campinas_digital_twin
+      MARTIN_CORS_ORIGIN: "*"
+    ports:
+      - "3000:3000"
+    command: ["--keep-alive", "75", "--listen-addresses", "0.0.0.0:3000"]
+
+  # 3. Frontend 3D Interativo (Vite + React + MapLibre GL JS + Three.js)
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: campinas_twin_frontend
+    restart: unless-stopped
+    environment:
+      VITE_MARTIN_TILE_URL: http://localhost:3000
+      VITE_CAMPINAS_DATA_URL: /data/campinas_geo_twin.json
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./index.html:/app/index.html
+
+volumes:
+  postgis_data:
