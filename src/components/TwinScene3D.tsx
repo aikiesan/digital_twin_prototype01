@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Html, Line } from '@react-three/drei';
 import * as THREE from 'three';
@@ -10,6 +10,7 @@ import {
   getEmissionsColor,
 } from '../simulationEngine';
 import campinasData from '../data/campinasRealData.json';
+import { BlenderGlbBridge } from './BlenderGlbBridge';
 
 interface TwinScene3DProps {
   sectors: SectorSimulated[];
@@ -1146,11 +1147,26 @@ const ExplodedLayersGroup: React.FC<TwinScene3DProps> = ({
 };
 
 export const TwinScene3D: React.FC<TwinScene3DProps> = (props) => {
+  const [useBlenderGlb, setUseBlenderGlb] = useState(false);
   const isDaylight = props.params.visualStyle === 'editorial_daylight';
   const bgColor = isDaylight ? '#dbe4ee' : '#020617';
 
   return (
     <div className="w-full h-full relative">
+      {/* Botão de Alternância: Motor Procedural WebGL vs. Malha .GLB Exportada do Blender 5.2 via MCP */}
+      <div className="absolute bottom-14 left-5 z-20 pointer-events-auto">
+        <button
+          onClick={() => setUseBlenderGlb((v) => !v)}
+          className={`px-3.5 py-2 rounded-xl border text-xs font-mono font-bold shadow-xl transition flex items-center gap-2 ${
+            useBlenderGlb
+              ? 'bg-amber-500 text-slate-950 border-white'
+              : 'bg-slate-950/90 hover:bg-slate-900 text-amber-300 border-amber-500/50'
+          }`}
+        >
+          <span>{useBlenderGlb ? '🟠 Exibindo Malha .GLB do Blender 5.2 (MCP)' : '🎨 Carregar Malha .GLB Nativa do Blender 5.2'}</span>
+        </button>
+      </div>
+
       <Canvas
         shadows
         camera={{ position: [2.5, 11.5, 17.5], fov: 38, near: 0.1, far: 240 }}
@@ -1179,7 +1195,17 @@ export const TwinScene3D: React.FC<TwinScene3DProps> = (props) => {
           color="#38bdf8"
         />
 
-        <ExplodedLayersGroup {...props} />
+        {useBlenderGlb ? (
+          <BlenderGlbBridge
+            visible={useBlenderGlb}
+            sectors={props.sectors}
+            params={props.params}
+            onSelectSector={props.onSelectSector}
+            onSelectCp2bNode={props.onSelectCp2bNode}
+          />
+        ) : (
+          <ExplodedLayersGroup {...props} />
+        )}
 
         <OrbitControls
           enableDamping

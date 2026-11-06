@@ -5,3 +5,7 @@ dist-ssr
 .DS_Store
 .env
 .env.*
+
+# Blender backups
+*.blend1
+*.blend2
