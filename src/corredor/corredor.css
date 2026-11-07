@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --surface: #fcfcfb;
+  --ink: #1f2328;
+  --ink-2: #565d66;
+  --ink-3: #6f7680;
+  --line: #e2e3df;
+  --accent: #0b7f99;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  background: #e9ebe6;
+  color: var(--ink);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  overflow: hidden;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgb(20 25 30 / 0.12);
+}
+
+.btn {
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.btn:hover {
+  background: #f1f2ee;
+}
+
+.btn[aria-pressed='true'] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.tag {
+  display: inline-block;
+  padding: 0 5px;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  font-size: 10px;
+  line-height: 15px;
+  white-space: nowrap;
+}
+
+.tag-observed {
+  color: #17663a;
+}
+
+.tag-derived {
+  color: #1c5cab;
+}
+
+.tag-modeled {
+  color: #9a4a12;
+}
